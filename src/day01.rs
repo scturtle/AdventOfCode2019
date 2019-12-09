@@ -12,8 +12,7 @@ fn more(mass: i32) -> i32 {
 pub fn run() {
     let nums = crate::common::get_input(1)
         .unwrap()
-        .trim_end()
-        .split('\n')
+        .lines()
         .map(|s| s.parse::<i32>().unwrap())
         .collect_vec();
     let fuel = nums.iter().map(|mass| mass / 3 - 2).sum::<i32>();
