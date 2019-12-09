@@ -1,0 +1,11 @@
+[package]
+name = "advent_of_code_2019"
+version = "0.1.0"
+authors = ["scturtle <scturtle@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+isahc = "0.8"
+itertools = "0.8"
+dotenv = "0.15"
+regex = "1.3"
