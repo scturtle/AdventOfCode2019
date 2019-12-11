@@ -18,14 +18,24 @@ pub fn run() {
         } else if imme1 {
             codes[i + 1]
         } else {
-            codes[codes[i + 1] as usize]
+            let j = codes[i + 1] as usize;
+            if j >= codes.len() {
+                0
+            } else {
+                codes[j]
+            }
         };
         let val2 = if i + 2 >= codes.len() {
             0
         } else if imme2 {
             codes[i + 2]
         } else {
-            codes[codes[i + 2] as usize]
+            let j = codes[i + 2] as usize;
+            if j >= codes.len() {
+                0
+            } else {
+                codes[j]
+            }
         };
         let out = if i + 3 >= codes.len() {
             0
@@ -40,6 +50,7 @@ pub fn run() {
             codes[out] = val1 * val2;
             i += 4;
         } else if inst == 3 {
+            let out = codes[i + 1] as usize;
             codes[out] = input;
             i += 2;
         } else if inst == 4 {
