@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 
 fn get_addr(mem: &[i64], base: i32, i: usize, n: u32) -> usize {
     let d = (mem[i] / 10i64.pow(n + 1)) % 10;
@@ -11,7 +12,7 @@ fn get_addr(mem: &[i64], base: i32, i: usize, n: u32) -> usize {
     }
 }
 
-fn step(mem: &mut [i64], i: &mut usize, b: &mut i32, input: i64) -> Option<i64> {
+fn step(mem: &mut [i64], i: &mut usize, b: &mut i32, input: &mut VecDeque<i64>) -> Option<i64> {
     loop {
         let c = mem[*i];
         let inst = c % 100;
@@ -29,7 +30,7 @@ fn step(mem: &mut [i64], i: &mut usize, b: &mut i32, input: i64) -> Option<i64> 
             *i += 4;
         } else if inst == 3 {
             let out = out1();
-            mem[out] = input;
+            mem[out] = input.pop_front().unwrap();
             *i += 2;
         } else if inst == 4 {
             let output = val1();
@@ -84,33 +85,95 @@ pub fn run() {
     let mut mem = vec![0i64; 10000];
     mem[..codes.len()].clone_from_slice(&codes[..]);
     let (mut i, mut b) = (0, 0);
-    let mut one_step = |input| step(&mut mem, &mut i, &mut b, input);
+    let mut input = VecDeque::new();
 
     let mut ascii = vec![];
-    while let Some(out) = one_step(0) {
+    while let Some(out) = step(&mut mem, &mut i, &mut b, &mut input) {
         ascii.push(out as u8);
     }
 
-    let map = String::from_utf8_lossy(&ascii);
-    println!("{}", map);
+    let map_str = String::from_utf8_lossy(&ascii);
+    println!("{}", map_str);
 
-    let m: Vec<_> = map.trim_end().as_bytes().split(|&b| b == b'\n').collect();
+    let map: Vec<_> = map_str.trim_end().as_bytes().split(|&b| b == b'\n').collect();
     let mut alignment = 0;
-    for (y, l) in m.iter().enumerate() {
+    let (mut sx, mut sy) = (0, 0);
+    for (y, l) in map.iter().enumerate() {
         for (x, &c) in l.iter().enumerate() {
             if c == b'#'
                 && x > 0
                 && y > 0
                 && x + 1 < l.len()
-                && y + 1 < m.len()
-                && m[y - 1][x] == b'#'
-                && m[y + 1][x] == b'#'
-                && m[y][x - 1] == b'#'
-                && m[y][x + 1] == b'#'
+                && y + 1 < map.len()
+                && map[y - 1][x] == b'#'
+                && map[y + 1][x] == b'#'
+                && map[y][x - 1] == b'#'
+                && map[y][x + 1] == b'#'
             {
                 alignment += x * y;
+            }
+            if c == b'^' {
+                sx = x as i32;
+                sy = y as i32;
             }
         }
     }
     dbg!(alignment);
+
+    // part two
+    let mut di = 0;
+    let dxdy = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+    let (mut x, mut y) = (sx, sy);
+    let is_valid = |x, y| x >= 0 && y >= 0 && x < map[0].len() as i32 && y < map.len() as i32;
+    // find the full path
+    let mut full_path = String::new();
+    loop {
+        let ldxy = dxdy[(di + 3) % 4];
+        let (lx, ly) = (x + ldxy.0, y + ldxy.1);
+        let lok = is_valid(lx, ly) && map[ly as usize][lx as usize] == b'#';
+        let rdxy = dxdy[(di + 1) % 4];
+        let (rx, ry) = (x + rdxy.0, y + rdxy.1);
+        let rok = is_valid(rx, ry) && map[ry as usize][rx as usize] == b'#';
+        if lok {
+            di = (di + 3) % 4;
+            full_path.push_str("L,");
+        } else if rok {
+            di = (di + 1) % 4;
+            full_path.push_str("R,");
+        } else {
+            break;
+        }
+        let mut c = 0;
+        let (dx, dy) = dxdy[di];
+        loop {
+            let (nx, ny) = (x + dx, y + dy);
+            if is_valid(nx, ny) && map[ny as usize][nx as usize] == b'#' {
+                x = nx;
+                y = ny;
+                c += 1;
+            } else {
+                break;
+            }
+        }
+        full_path.push_str(&format!("{},", c));
+    }
+    println!("{}", &full_path[..full_path.len() - 1]);
+
+    // well, this is some manual work based on the full path
+    let program = "A,B,A,C,B,C,A,B,A,C\nR,10,L,8,R,10,R,4\nL,6,L,6,R,10\nL,6,R,12,R,12,R,10\nn\n";
+    for &c in program.as_bytes() {
+        input.push_back(c as i64);
+    }
+
+    // run
+    mem[..codes.len()].clone_from_slice(&codes[..]);
+    mem[0] = 2;
+    let (mut i, mut b) = (0, 0);
+    while let Some(out) = step(&mut mem, &mut i, &mut b, &mut input) {
+        if out < 256 {
+            print!("{}", out as u8 as char);
+        } else {
+            dbg!(out);
+        }
+    }
 }

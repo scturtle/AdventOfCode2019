@@ -1,3 +1,4 @@
+#![allow(clippy::many_single_char_names)]
 mod common;
 // mod day01;
 // mod day02;
