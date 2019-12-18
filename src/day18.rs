@@ -60,32 +60,81 @@ fn dfs(
     cache: &mut HashMap<Vec<(i32, i32)>, i32>,
 ) -> i32 {
     let keys = accessible_keys(entry, &map);
+
     if keys.is_empty() {
         return 0;
     }
 
     let mut k = keys.iter().map(|&(i, j, _, _)| (i, j)).collect::<Vec<_>>();
-    k.sort();
     k.push(entry);
     if let Some(&v) = cache.get(&k) {
         return v;
     }
 
     let mut min_cost = std::i32::MAX;
-    for &(i, j, key, cost_to_key) in &keys {
+    for &(key_i, key_j, key, key_cost) in &keys {
         let door = key - 32;
         let door_pos = find_door(door, &map);
         if let Some((di, dj)) = door_pos {
             map[di][dj] = b'.';
         }
-        map[i as usize][j as usize] = b'.';
-        let cost_later = dfs((i, j), map, cache);
-        min_cost = min_cost.min(cost_to_key + cost_later);
-        map[i as usize][j as usize] = key;
+        map[key_i as usize][key_j as usize] = b'.';
+        let layter_cost = dfs((key_i, key_j), map, cache);
+        min_cost = min_cost.min(key_cost + layter_cost);
+        map[key_i as usize][key_j as usize] = key;
         if let Some((di, dj)) = door_pos {
             map[di][dj] = door;
         }
     }
+
+    cache.insert(k, min_cost);
+    min_cost
+}
+
+pub fn dfs2(
+    es: &mut [(i32, i32); 4],
+    map: &mut Vec<Vec<u8>>,
+    cache: &mut HashMap<Vec<(i32, i32)>, i32>,
+) -> i32 {
+    let keys = es
+        .iter()
+        .map(|&e| accessible_keys(e, &map))
+        .collect::<Vec<_>>();
+
+    if keys.iter().all(|ks| ks.is_empty()) {
+        return 0;
+    }
+
+    let mut k: Vec<_> = keys
+        .iter()
+        .flat_map(|ks| ks.iter().map(|&(i, j, _, _)| (i, j)))
+        .collect();
+    k.extend_from_slice(es);
+    if let Some(&v) = cache.get(&k) {
+        return v;
+    }
+
+    let mut min_cost = std::i32::MAX;
+    for ei in 0..4 {
+        for &(key_i, key_j, key, key_cost) in &keys[ei] {
+            let door = key - 32;
+            let door_pos = find_door(door, &map);
+            if let Some((di, dj)) = door_pos {
+                map[di][dj] = b'.';
+            }
+            map[key_i as usize][key_j as usize] = b'.';
+            let e = es[ei];
+            es[ei] = (key_i, key_j);
+            let later_cost = dfs2(es, map, cache);
+            min_cost = min_cost.min(key_cost + later_cost);
+            es[ei] = e;
+            map[key_i as usize][key_j as usize] = key;
+            if let Some((di, dj)) = door_pos {
+                map[di][dj] = door;
+            }
+        }
+    }
+
     cache.insert(k, min_cost);
     min_cost
 }
@@ -97,8 +146,24 @@ pub fn run() {
         .split('\n')
         .map(|l| l.as_bytes().to_vec())
         .collect();
-    let entry = find_entry(&mut map);
+    let e = find_entry(&mut map);
     let mut cache = HashMap::new();
-    let cost = dfs(entry, &mut map, &mut cache);
+    let cost = dfs(e, &mut map, &mut cache);
+    dbg!(cost);
+
+    // part two
+    map[e.0 as usize][e.1 as usize] = b'#';
+    map[(e.0 + 1) as usize][e.1 as usize] = b'#';
+    map[(e.0 - 1) as usize][e.1 as usize] = b'#';
+    map[e.0 as usize][(e.1 + 1) as usize] = b'#';
+    map[e.0 as usize][(e.1 - 1) as usize] = b'#';
+    let mut entries = [
+        (e.0 - 1, e.1 - 1),
+        (e.0 - 1, e.1 + 1),
+        (e.0 + 1, e.1 - 1),
+        (e.0 + 1, e.1 + 1),
+    ];
+    let mut cache = HashMap::new();
+    let cost = dfs2(&mut entries, &mut map, &mut cache);
     dbg!(cost);
 }
