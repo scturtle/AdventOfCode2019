@@ -22,7 +22,8 @@ mod intcode;
 // mod day19;
 // mod day20;
 // mod day21;
-mod day22;
+// mod day22;
+mod day23;
 
 fn main() {
     // day01::run();
@@ -46,5 +47,6 @@ fn main() {
     // day19::run();
     // day20::run();
     // day21::run();
-    day22::run();
+    // day22::run();
+    day23::run();
 }
