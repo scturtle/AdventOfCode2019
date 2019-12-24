@@ -1,6 +1,6 @@
 #![allow(clippy::many_single_char_names)]
 mod common;
-mod intcode;
+// mod intcode;
 // mod day01;
 // mod day02;
 // mod day03;
@@ -23,7 +23,8 @@ mod intcode;
 // mod day20;
 // mod day21;
 // mod day22;
-mod day23;
+// mod day23;
+mod day24;
 
 fn main() {
     // day01::run();
@@ -48,5 +49,6 @@ fn main() {
     // day20::run();
     // day21::run();
     // day22::run();
-    day23::run();
+    // day23::run();
+    day24::run();
 }
